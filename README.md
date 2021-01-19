@@ -1,4 +1,7 @@
 ## Ethereal
+
+# <img src="src.png">
+
 Ethereal is a 128x128px (16x16 tiles) tilemap editor I made to use in my game, Eternity.<br/>
 It uses [LÖVE](https://github.com/love2d/love) as framework and [leaf](https://github.com/mateusmds/leaf) as code core.<br/>
 
