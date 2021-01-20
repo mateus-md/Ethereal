@@ -210,22 +210,17 @@ function save_map()
     local file = io.open('map.txt', 'wb')
     local cntt = ""
 
-    local cnt = 1
     for _, line in ipairs(data.back) do
 
         file:write(line .. 'ç')
         cnt = cnt + 1
     end
 
-    leaf.log(cnt)
-
     for _, line in ipairs(data.main) do
 
         file:write(line .. 'ç')
         cnt = cnt + 1
     end
-
-    leaf.log(cnt)
 
     file:write('::END::', left)
     file:close()
