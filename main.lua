@@ -30,8 +30,8 @@ function leaf.load()
 
     if not cntt:match('^\n?$') then
 
-        data.back = cntt:sub(001, 256 + 16):split('ç')
-        data.main = cntt:sub(259 + 16, 515 + 16):split('ç')
+        data.back = cntt:sub(001, 289):split('ç')
+        data.main = cntt:sub(291, 291 + 289):split('ç')
 
         if #data.back == 0 then data.back = leaf.table_copy(EMPTY) end
         if #data.main == 0 then data.main = leaf.table_copy(EMPTY) end
@@ -207,19 +207,26 @@ end
 
 function save_map()
 
-    local file = io.open('map.txt', 'w')
+    local file = io.open('map.txt', 'wb')
     local cntt = ""
 
+    local cnt = 1
     for _, line in ipairs(data.back) do
 
         file:write(line .. 'ç')
+        cnt = cnt + 1
     end
+
+    leaf.log(cnt)
 
     for _, line in ipairs(data.main) do
 
         file:write(line .. 'ç')
+        cnt = cnt + 1
     end
 
-    file:write('::ÊLASQUERA::', left)
+    leaf.log(cnt)
+
+    file:write('::END::', left)
     file:close()
 end
