@@ -213,13 +213,11 @@ function save_map()
     for _, line in ipairs(data.back) do
 
         file:write(line .. 'ç')
-        cnt = cnt + 1
     end
 
     for _, line in ipairs(data.main) do
 
         file:write(line .. 'ç')
-        cnt = cnt + 1
     end
 
     file:write('::END::', left)
