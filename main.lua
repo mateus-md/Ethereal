@@ -4,7 +4,6 @@ require 'leaf'
 leaf.init(640, 408, 3, false, false)
 
 local data = {}
-local left
 
 local slct, slot, dir, csl
 local EMPTY = {}
@@ -31,12 +30,10 @@ function leaf.load()
     if not cntt:match('^\n?$') then
 
         data.back = cntt:sub(001, 289):split('ç')
-        data.main = cntt:sub(291, 291 + 289):split('ç')
+        data.main = cntt:sub(292, 292 + 289):split('ç')
 
-        if #data.back == 0 then data.back = leaf.table_copy(EMPTY) end
-        if #data.main == 0 then data.main = leaf.table_copy(EMPTY) end
-
-        left = cntt:match('::ÊLASQUERA::(.*)') or ''
+        if #data.back < 17 then data.back = leaf.table_copy(EMPTY) end
+        if #data.main < 17 then data.main = leaf.table_copy(EMPTY) end
     else
         data.back = leaf.table_copy(EMPTY)
         data.main = leaf.table_copy(EMPTY)
@@ -220,6 +217,5 @@ function save_map()
         file:write(line .. 'ç')
     end
 
-    file:write('::END::', left)
     file:close()
 end
