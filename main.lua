@@ -1,7 +1,7 @@
 -- Using leaf lib --
 require 'leaf'
 -- Init screen --
-leaf.init(640, 408, 3, false, false)
+leaf.init({w = 640, h = 408, s = 3})
 
 local data = {}
 
@@ -14,42 +14,40 @@ end
 
 function leaf.load()
 
-    local file
-    if not love.filesystem.getInfo('map.txt') then
+    local file, info
+    info = love.filesystem.getInfo('map.txt')
 
+    if not info then
+        -- create a new file --
         file = io.open('map.txt', 'w+')
         file:close()
     end
-
     file = io.open('map.txt', 'rb')
-    assert(file, 'map.txt not found')
-
     local cntt = file:read('*all')
     file:close()
 
+    if info then
+        assert(info.size % 288 == 0,
+        'map.txt was manually changed or corrupted')
+    end
+
     if not cntt:match('^\n?$') then
 
-        data.back = cntt:sub(001, 289):split('ç')
-        data.main = cntt:sub(292, 292 + 289):split('ç')
+        for s = 0, info.size, 288 do
+            data[s / 288 + 1] = cntt:sub(s + 1, s + 289):split('ç')
+        end
 
-        if #data.back < 17 then data.back = leaf.table_copy(EMPTY) end
-        if #data.main < 17 then data.main = leaf.table_copy(EMPTY) end
-    else
-        data.back = leaf.table_copy(EMPTY)
-        data.main = leaf.table_copy(EMPTY)
-        left = ""
-    end
+    else data = {leaf.table_copy(EMPTY)} end
 
     slct = leaf.vector(0, 0)
     slot = leaf.vector(0, 0)
     dir  = leaf.vector()
 
     csl = 1
-    update_map(data.back)
+    update_map(data[1])
 end
 
 function leaf.step()
-
     -- avoid moving when using commands --
     if not leaf.btn('lctrl') then
         -- move tilemap selection --
@@ -70,152 +68,144 @@ function leaf.step()
     slot.x = slot.x % 16; slot.y = slot.y % 16
 
     if leaf.btnp('e') then
+        -- if its editing the background --
+        if csl ~= 0 then
 
-        if csl == 1 then
+            if not data[csl] then
+                data[csl] = leaf.table_copy(EMPTY)
+            end
 
-            local line = data.back[slct.y + 1]
+            local line = data[csl][slct.y + 1]
             local pre, pos = line:sub(1, slct.x), line:sub(slct.x + 2)
 
             local tile = string.char(slot.y * 16 + slot.x)
-            data.back[slct.y + 1] = pre .. tile .. pos
+            data[csl][slct.y + 1] = pre .. tile .. pos
 
-            update_map(data.back)
-
-        elseif csl == 2 then
-
-            local line = data.main[slct.y + 1]
-            local pre, pos = line:sub(1, slct.x), line:sub(slct.x + 2)
-
-            local tile = string.char(slot.y * 16 + slot.x)
-
-            data.main[slct.y + 1] = pre .. tile .. pos
-            update_map(data.main)
+            update_map(data[csl])
         end
     end
 
     if not leaf.btn('lctrl') and leaf.btnp('q') then
 
-        if csl == 1 then
-
-            local line = data.back[slct.y + 1]
-            local pre, pos = line:sub(1, slct.x), line:sub(slct.x + 2)
-
-            local tile = string.char(255)
-
-            data.back[slct.y + 1] = pre .. tile .. pos
-            update_map(data.back)
-
-        elseif csl == 2 then
-
-            local line = data.main[slct.y + 1]
-            local pre, pos = line:sub(1, slct.x), line:sub(slct.x + 2)
-
-            local tile = string.char(255)
-
-            data.main[slct.y + 1] = pre .. tile .. pos
-            update_map(data.main)
+        if not data[csl] then
+            data[csl] = leaf.table_copy(EMPTY)
         end
+
+        if csl ~= 0 then
+
+            local line = data[csl][slct.y + 1]
+            local pre, pos = line:sub(1, slct.x), line:sub(slct.x + 2)
+
+            local tile = string.char(255)
+
+            data[csl][slct.y + 1] = pre .. tile .. pos
+            update_map(data[csl])
+        end
+
     elseif leaf.btnp('q') then
 
-        if csl == 1 then
+        if csl ~= 0 then
 
-            data.back = leaf.table_copy(EMPTY)
-            update_map(data.back)
-
-        elseif csl == 2 then
-
-            data.main = leaf.table_copy(EMPTY)
-            update_map(data.main)
+            data[csl] = leaf.table_copy(EMPTY)
+            update_map(data[csl])
         end
     end
 
-    if leaf.btnp('1') then
+    for b = 1, 9 do
+        if leaf.btnp(tostring(b)) then
 
-        csl = 1
-        update_map(data.back)
+            csl = b
+            if not data[csl] then
+                data[csl] = leaf.table_copy(EMPTY)
+            end
+            update_map(data[b])
+        end
     end
-    if leaf.btnp('2') then
+    if leaf.btnp('0') then
 
-        csl = 2
-        update_map(data.main)
-    end
-    if leaf.btnp('3') then
-
-        csl = 3
-        update_map(data.back, data.main)
+        csl = 0
+        update_map()
     end
 
     if leaf.btn('lctrl') and leaf.btnp('s') then save_map() end
 end
 
 function leaf.draw()
-
+    -- draw map --
     leaf.draw_tilemap()
+
+    -- draw tilemap miniature --
     love.graphics.draw(leaf.tiled, 144, 4, 0, 0.51, 0.51)
 
+    -- draw cursors --
     leaf.rect(slct.x * 8 + 4, slct.y * 8 + 4, 8)
     leaf.rect(slot.x * 4.08 + 144, slot.y * 4.08 + 4, 4.08)
 end
 
-function update_map(layer, other)
+function update_map(layer)
 
     local back = {}
-    local main = {}
 
-    for y = 0, #layer - 1 do
+    if layer then
+        for y = 0, #layer - 1 do
 
-        local line = layer[y + 1]
-        for x = 0, #line - 1 do
-
-            local tile = line:sub(x + 1, x + 1):byte()
-            local sx   = tile % 16
-            local sy   = (tile - sx) / 16
-
-            table.insert(back, {
-                p = leaf.vector(x * 8 + 4, y * 8 + 4, 0.125),
-                s = leaf.vector(sx, sy, 8),
-                c = tile
-            })
-        end
-    end
-
-    if other then
-
-        for y = 0, #other - 1 do
-
-            local line = other[y + 1]
+            local line = layer[y + 1]
             for x = 0, #line - 1 do
 
                 local tile = line:sub(x + 1, x + 1):byte()
                 local sx   = tile % 16
                 local sy   = (tile - sx) / 16
 
-                table.insert(main, {
+                table.insert(back, {
                     p = leaf.vector(x * 8 + 4, y * 8 + 4, 0.125),
                     s = leaf.vector(sx, sy, 8),
                     c = tile
                 })
             end
         end
-    end
+        leaf.tilemap({back})
+    else
+        for l = 1, 9 do
+            back[l] = {}
 
-    leaf.tilemap(back, other and main)
+            -- don't try to render empty layers --
+            if not data[l] then goto continue end
+            if leaf.table_eq(data[l], EMPTY) then goto continue end
+
+            for y = 0, #data[l] - 1 do
+
+                local line = data[l][y + 1]
+                for x = 0, #line - 1 do
+
+                    local tile = line:sub(x + 1, x + 1):byte()
+                    local sx   = tile % 16
+                    local sy   = (tile - sx) / 16
+
+                    table.insert(back[l], {
+                        p = leaf.vector(x * 8 + 4, y * 8 + 4, 0.125),
+                        s = leaf.vector(sx, sy, 8),
+                        c = tile
+                    })
+                end
+            end
+            ::continue::
+        end
+        leaf.tilemap(back)
+    end
 end
 
 function save_map()
 
     local file = io.open('map.txt', 'wb')
-    local cntt = ""
 
-    for _, line in ipairs(data.back) do
+    for _, layer in ipairs(data) do
+        -- avoid storing empty layers --
+        if not leaf.table_eq(layer, EMPTY) then
+            for _, line in ipairs(layer) do
 
-        file:write(line .. 'ç')
+                file:write(line .. 'ç')
+            end
+        end
     end
-
-    for _, line in ipairs(data.main) do
-
-        file:write(line .. 'ç')
-    end
-
     file:close()
 end
