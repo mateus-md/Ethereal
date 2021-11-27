@@ -6,7 +6,7 @@ Ethereal is a 128x128px (16x16 tiles) tilemap editor I made to use in my game, E
 It uses [LÖVE](https://github.com/love2d/love) as framework and [leaf](https://github.com/mateusmds/leaf) as code core.<br/>
 
 ## Controls
-You have two layers to work. You can select which you want to use by pressing 1 or 2. If you press 3 you get the full tilemap, and the editing mode will be disabled.<br/>
+You have nine layers to work. You can select which you want to use by pressing the corresponding number. If you press 0 you get the full tilemap, and the editing mode will be disabled.<br/>
 
 ### Navegation and usage
 You can use WASD to move your selection cursor in the tilemap, and the arrow keys to select your tile (from your tilemap source in `resources/tilemap.png`).<br/>
