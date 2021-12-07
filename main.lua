@@ -26,18 +26,20 @@ function leaf.load()
     local cntt = file:read('*all')
     file:close()
 
-    if info then
-        assert(info.size % 288 == 0,
-        'map.txt was manually changed or corrupted')
-    end
+    print('reading ' .. (info.size) .. ' bytes')
 
     if not cntt:match('^\n?$') then
 
-        for s = 0, info.size, 288 do
-            data[s / 288 + 1] = cntt:sub(s + 1, s + 289):split('ç')
+        local readl = info.size - info.size % 288
+        for s = 0, readl, 288 do
+            data[s / 288 + 1] = cntt:sub(s + 1, s + 288):split('ç')
         end
 
-    else data = {leaf.table_copy(EMPTY)} end
+    else
+        for i = 1, 10 do
+            data[i] = leaf.table_copy(EMPTY)
+        end
+    end
 
     slct = leaf.vector(0, 0)
     slot = leaf.vector(0, 0)
@@ -118,7 +120,7 @@ function leaf.step()
             if not data[csl] then
                 data[csl] = leaf.table_copy(EMPTY)
             end
-            update_map(data[b])
+            update_map(data[csl])
         end
     end
     if leaf.btnp('0') then
@@ -190,22 +192,42 @@ function update_map(layer)
             end
             ::continue::
         end
-        leaf.tilemap(back)
+        local main
+        if not data[10] or leaf.table_eq(data[10], EMPTY) then goto exit end
+
+        main = {}
+        for y = 0, #data[10] - 1 do
+
+            local line = data[10][y] or EMPTY[1]
+            for x = 0, #line - 1 do
+
+                local tile = line:sub(x + 1, x + 1):byte()
+                local sx   = tile % 16
+                local sy   = (tile - sx) / 16
+
+                table.insert(main, {
+                    p = leaf.vector(x * 8 + 4, y * 8 + 4, 0.125),
+                    s = leaf.vector(sx, sy, 8),
+                    c = tile
+                })
+            end
+        end
+        ::exit::
+        leaf.tilemap(back, main)
     end
 end
 
 function save_map()
 
     local file = io.open('map.txt', 'wb')
-
+    local size = 0
     for _, layer in ipairs(data) do
-        -- avoid storing empty layers --
-        if not leaf.table_eq(layer, EMPTY) then
-            for _, line in ipairs(layer) do
+        for l = 1, 16 do
 
-                file:write(line .. 'ç')
-            end
+            file:write((layer[l] or EMPTY[1]) .. 'ç')
+            size = size + 16
         end
     end
+    print('writing ' .. (size) .. ' bytes')
     file:close()
 end
