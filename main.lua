@@ -22,11 +22,14 @@ function leaf.load()
         file = io.open('map.txt', 'w+')
         file:close()
     end
+
+    if info then
+        print('reading ' .. (info.size) .. ' bytes')
+    end
+
     file = io.open('map.txt', 'rb')
     local cntt = file:read('*all')
     file:close()
-
-    print('reading ' .. (info.size) .. ' bytes')
 
     if not cntt:match('^\n?$') then
 
